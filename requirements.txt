@@ -1,0 +1,8 @@
+tensorflow
+transformers
+librosa
+torch
+bcrypt
+opencv-python
+tensorflow
+streamlit
