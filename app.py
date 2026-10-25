@@ -24,28 +24,12 @@ def load_eeg_model():
     return model, scaler, label_encoder
 
 @st.cache_resource
-def load_face_model():
-    
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    return face_cascade
-
-@st.cache_resource
-def load_face_model1():
-    model = load_model('model_78.h5')
-    model.load_weights("model_weights_78.h5")
-    return model
-@st.cache_resource
 def load_speech_model():
     feature_extractor = Wav2Vec2FeatureExtractor.from_pretrained("r-f/wav2vec-english-speech-emotion-recognition")
     model = Wav2Vec2ForSequenceClassification.from_pretrained("r-f/wav2vec-english-speech-emotion-recognition")
     return feature_extractor, model
 
-def load_speech_model1():
-    model = load_model('speech.h5')
-    model.load_weights("speech.h5")
-    return model
 eeg_model, scaler, label_encoder = load_eeg_model()
-# face_model = load_face_model()
 feature_extractor, speech_model = load_speech_model()
 emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
 # -------------------- Authentication --------------------
@@ -69,32 +53,6 @@ def check_password(password, hashed_password):
     return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 # -------------------- Signup --------------------
-def predict_emotion(image):
-    img_gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + 'haarcascade_frontalface_default.xml')
-    face_cascade = face_cascade.detectMultiScale(img_gray, scaleFactor=1.3, minNeighbors=5)
-    
-    if len(face_cascade) == 0:
-        return image, "No face detected"
-    
-    for (x, y, w, h) in face_cascade:
-        cv2.rectangle(image, (x, y), (x + w, y + h), (0, 255, 255), 2)
-        roi_gray = img_gray[y:y + h, x:x + w]
-        roi_gray = cv2.resize(roi_gray, (48, 48), interpolation=cv2.INTER_AREA)
-        
-        roi = roi_gray.astype('float') / 255.0
-        roi = img_to_array(roi)
-        roi = np.expand_dims(roi, axis=0)
-        x=load_face_model1()
-        prediction = x.predict(roi)[0]
-        maxindex = int(np.argmax(prediction))
-        finalout = emotion_labels[maxindex]
-        output = str(finalout)
-        
-        label_position = (x, y - 10)
-        cv2.putText(image, output, label_position, cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    
-    return image, output
 def signup():
     st.title("🔐 Signup")
     username = st.text_input("Username")
@@ -166,7 +124,11 @@ def face_emotion_detection():
     
     emotion_labels = ['Angry', 'Disgust', 'Fear', 'Happy', 'Neutral', 'Sad', 'Surprise']
 
-# Load model.
+# Load model. The full model file 'model_78.h5' is not in this repository
+    # (only its weights file is), so fail with a clear message instead of a crash.
+    if not os.path.exists('model_78.h5'):
+        st.error("Face Emotion mode is unavailable: the model file 'model_78.h5' is missing from the project folder. See 'Known limitations' in README.md.")
+        return
     classifier = load_model('model_78.h5')
     classifier.load_weights("model_weights_78.h5")
 
